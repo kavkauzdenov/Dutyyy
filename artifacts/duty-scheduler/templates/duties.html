@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Наряды — Система нарядов{% endblock %}
+
+{% block content %}
+<div style="margin:10px 0 8px;">
+    <span class="page-title">Наряды</span>
+</div>
+
+<div class="date-nav">
+    <form method="get" action="/duties" style="display:flex;align-items:center;gap:8px;">
+        <label style="font-size:12px;font-weight:bold;text-transform:uppercase;">Дата суток:</label>
+        <input type="date" name="duty_date" value="{{ duty_date }}"
+               style="border:1px solid #9099a3;padding:4px 7px;font-size:12px;font-family:Arial;">
+        <button type="submit" class="btn btn-secondary" style="padding:4px 12px;">Показать</button>
+    </form>
+</div>
+
+<div class="panels">
+    <div class="panel">
+        <div class="panel-header">Создать наряд на {{ duty_date }}</div>
+        <div class="panel-body">
+            <form method="post" action="/duties">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Тип наряда</label>
+                        <select name="duty_type_id" required style="min-width:180px;">
+                            {% for dt in duty_types %}
+                            <option value="{{ dt.id }}">{{ dt.name }} ({{ 'обяз.' if dt.category == 'mandatory' else 'доп.' }})</option>
+                            {% else %}
+                            <option disabled>— Нет типов —</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Дата</label>
+                        <input type="date" name="duty_date" value="{{ duty_date }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Начало</label>
+                        <input type="time" name="start_time" value="20:00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Окончание</label>
+                        <input type="time" name="end_time" value="08:00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Мин. состав</label>
+                        <input type="number" name="min_staff" value="1" min="1" style="width:70px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Примечание</label>
+                        <input type="text" name="notes" placeholder="...">
+                    </div>
+                    <div class="form-group" style="justify-content:flex-end;">
+                        <button type="submit" class="btn btn-primary">Добавить</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">Добавить тип наряда</div>
+        <div class="panel-body">
+            <form method="post" action="/duty_types">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Название</label>
+                        <input type="text" name="name" required placeholder="Суточный наряд">
+                    </div>
+                    <div class="form-group">
+                        <label>Категория</label>
+                        <select name="category">
+                            <option value="mandatory">Обязательный</option>
+                            <option value="additional">Дополнительный</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Мин. состав</label>
+                        <input type="number" name="min_staff" value="1" min="1" style="width:70px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Описание</label>
+                        <input type="text" name="description" placeholder="...">
+                    </div>
+                    <div class="form-group" style="justify-content:flex-end;">
+                        <button type="submit" class="btn btn-success">Создать тип</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="tbl-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Тип</th>
+                <th>Категория</th>
+                <th>Время</th>
+                <th>Мин.</th>
+                <th>Назначено</th>
+                <th>Состав</th>
+                <th>Примечание</th>
+                <th>Назначить вручную</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for d in duties %}
+        <tr>
+            <td class="text-muted">{{ d.id }}</td>
+            <td class="text-bold">{{ d.type_name }}</td>
+            <td>
+                {% if d.category == 'mandatory' %}
+                    <span class="badge badge-blue">Обязательный</span>
+                {% else %}
+                    <span class="badge badge-gray">Дополнительный</span>
+                {% endif %}
+            </td>
+            <td>{{ d.start_time }}–{{ d.end_time }}</td>
+            <td>{{ d.min_staff }}</td>
+            <td>
+                {% if d.assigned_count >= d.min_staff %}
+                    <span class="badge badge-green">{{ d.assigned_count }}</span>
+                {% elif d.assigned_count > 0 %}
+                    <span class="badge badge-yellow">{{ d.assigned_count }}</span>
+                {% else %}
+                    <span class="badge badge-red">0</span>
+                {% endif %}
+            </td>
+            <td style="max-width:220px;word-wrap:break-word;">
+                {{ d.assigned_names or '—' }}
+            </td>
+            <td class="text-muted">{{ d.notes or '' }}</td>
+            <td>
+                <form method="post" action="/duties/{{ d.id }}/assign" style="display:flex;gap:4px;">
+                    <input type="hidden" name="duty_date" value="{{ duty_date }}">
+                    <input type="number" name="staff_id" placeholder="ID сотр."
+                           style="width:80px;font-size:11px;padding:3px 5px;border:1px solid #9099a3;" required>
+                    <button type="submit" class="btn btn-secondary" style="padding:3px 10px;font-size:11px;">Назначить</button>
+                </form>
+            </td>
+            <td>
+                <form method="post" action="/duties/{{ d.id }}/delete"
+                      onsubmit="return confirm('Удалить наряд?')">
+                    <input type="hidden" name="duty_date" value="{{ duty_date }}">
+                    <button type="submit" class="btn btn-danger" style="padding:3px 10px;font-size:11px;">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr class="empty-row"><td colspan="10">Нет нарядов на {{ duty_date }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="tbl-wrap">
+    <div class="panel-header" style="padding:5px 10px;background:#e8ecf4;font-size:12px;font-weight:bold;text-transform:uppercase;color:#1a2a4a;border-bottom:1px solid #b0b8c8;">
+        Справочник типов нарядов
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Категория</th>
+                <th>Мин. состав</th>
+                <th>Описание</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for dt in duty_types %}
+        <tr>
+            <td class="text-muted">{{ dt.id }}</td>
+            <td class="text-bold">{{ dt.name }}</td>
+            <td>
+                {% if dt.category == 'mandatory' %}
+                    <span class="badge badge-blue">Обязательный</span>
+                {% else %}
+                    <span class="badge badge-gray">Дополнительный</span>
+                {% endif %}
+            </td>
+            <td>{{ dt.min_staff }}</td>
+            <td class="text-muted">{{ dt.description or '' }}</td>
+            <td>
+                <form method="post" action="/duty_types/{{ dt.id }}/delete"
+                      onsubmit="return confirm('Удалить тип наряда?')">
+                    <button type="submit" class="btn btn-danger" style="padding:3px 10px;font-size:11px;">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr class="empty-row"><td colspan="6">Нет типов нарядов</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

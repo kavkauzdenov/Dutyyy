@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Суточный план — Система нарядов{% endblock %}
+
+{% block content %}
+<div style="margin:10px 0 8px;">
+    <span class="page-title">Суточный план</span>
+</div>
+
+<div class="date-nav">
+    <form method="get" action="/daily-plan" style="display:flex;align-items:center;gap:8px;">
+        <label style="font-size:12px;font-weight:bold;text-transform:uppercase;">Дата:</label>
+        <input type="date" name="plan_date" value="{{ plan_date }}"
+               style="border:1px solid #9099a3;padding:4px 7px;font-size:12px;font-family:Arial;">
+        <button type="submit" class="btn btn-secondary" style="padding:4px 12px;">Показать</button>
+    </form>
+
+    <form method="post" action="/generate_schedule">
+        <input type="hidden" name="plan_date" value="{{ plan_date }}">
+        <button type="submit" class="btn btn-primary">Авторазбивка</button>
+    </form>
+
+    <form method="post" action="/daily-plan/clear"
+          onsubmit="return confirm('Очистить план на {{ plan_date }}?')">
+        <input type="hidden" name="plan_date" value="{{ plan_date }}">
+        <button type="submit" class="btn btn-danger">Очистить план</button>
+    </form>
+</div>
+
+{% if unplanned %}
+<div class="alert alert-warning">
+    <strong>Без плана ({{ unplanned|length }} чел.):</strong>
+    {% for s in unplanned %}{{ s.rank }} {{ s.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+</div>
+{% endif %}
+
+{% set duty_rows    = plan | selectattr('assignment_type', 'equalto', 'duty')        | list %}
+{% set rest_rows    = plan | selectattr('assignment_type', 'equalto', 'rest')        | list %}
+{% set train_rows   = plan | selectattr('assignment_type', 'equalto', 'training')    | list %}
+{% set maint_rows   = plan | selectattr('assignment_type', 'equalto', 'maintenance') | list %}
+{% set admin_rows   = plan | selectattr('assignment_type', 'equalto', 'admin')       | list %}
+
+<div class="tbl-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Звание</th>
+                <th>Фамилия И.О.</th>
+                <th>Тип л/с</th>
+                <th>Занятость</th>
+                <th>Наряд / Вид</th>
+                <th>Время</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        {% if duty_rows %}
+        <tr style="background:#dde4f0;">
+            <td colspan="6" style="font-weight:bold;font-size:11px;text-transform:uppercase;color:#1a2a4a;padding:4px 10px;">
+                В наряде — {{ duty_rows|length }} чел.
+            </td>
+        </tr>
+        {% for row in duty_rows %}
+        <tr>
+            <td>{{ row.rank }}</td>
+            <td class="text-bold">{{ row.staff_name }}</td>
+            <td>
+                {% if row.staff_type == 'contract' %}Контракт
+                {% elif row.staff_type == 'conscript' %}Срочник
+                {% else %}Освобождён{% endif %}
+            </td>
+            <td><span class="badge badge-blue">Наряд</span></td>
+            <td>{{ row.duty_name or '—' }}</td>
+            <td>{{ row.start_time }}–{{ row.end_time }}</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+
+        {% if rest_rows %}
+        <tr style="background:#e8eaea;">
+            <td colspan="6" style="font-weight:bold;font-size:11px;text-transform:uppercase;color:#444;padding:4px 10px;">
+                Выходной — {{ rest_rows|length }} чел.
+            </td>
+        </tr>
+        {% for row in rest_rows %}
+        <tr>
+            <td>{{ row.rank }}</td>
+            <td class="text-bold">{{ row.staff_name }}</td>
+            <td>
+                {% if row.staff_type == 'contract' %}Контракт
+                {% elif row.staff_type == 'conscript' %}Срочник
+                {% else %}Освобождён{% endif %}
+            </td>
+            <td><span class="badge badge-gray">Выходной</span></td>
+            <td>—</td>
+            <td>—</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+
+        {% if train_rows %}
+        <tr style="background:#e8f0e8;">
+            <td colspan="6" style="font-weight:bold;font-size:11px;text-transform:uppercase;color:#155724;padding:4px 10px;">
+                Обучение — {{ train_rows|length }} чел.
+            </td>
+        </tr>
+        {% for row in train_rows %}
+        <tr>
+            <td>{{ row.rank }}</td>
+            <td class="text-bold">{{ row.staff_name }}</td>
+            <td>
+                {% if row.staff_type == 'contract' %}Контракт
+                {% elif row.staff_type == 'conscript' %}Срочник
+                {% else %}Освобождён{% endif %}
+            </td>
+            <td><span class="badge badge-green">Обучение</span></td>
+            <td>—</td>
+            <td>—</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+
+        {% if maint_rows %}
+        <tr style="background:#f5ece0;">
+            <td colspan="6" style="font-weight:bold;font-size:11px;text-transform:uppercase;color:#663300;padding:4px 10px;">
+                Хоз. работы — {{ maint_rows|length }} чел.
+            </td>
+        </tr>
+        {% for row in maint_rows %}
+        <tr>
+            <td>{{ row.rank }}</td>
+            <td class="text-bold">{{ row.staff_name }}</td>
+            <td>
+                {% if row.staff_type == 'contract' %}Контракт
+                {% elif row.staff_type == 'conscript' %}Срочник
+                {% else %}Освобождён{% endif %}
+            </td>
+            <td><span class="badge badge-orange">Хоз. работы</span></td>
+            <td>—</td>
+            <td>—</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+
+        {% if admin_rows %}
+        <tr style="background:#f5f0e0;">
+            <td colspan="6" style="font-weight:bold;font-size:11px;text-transform:uppercase;color:#856404;padding:4px 10px;">
+                Адм. задачи — {{ admin_rows|length }} чел.
+            </td>
+        </tr>
+        {% for row in admin_rows %}
+        <tr>
+            <td>{{ row.rank }}</td>
+            <td class="text-bold">{{ row.staff_name }}</td>
+            <td>
+                {% if row.staff_type == 'contract' %}Контракт
+                {% elif row.staff_type == 'conscript' %}Срочник
+                {% else %}Освобождён{% endif %}
+            </td>
+            <td><span class="badge badge-yellow">Адм. задачи</span></td>
+            <td>—</td>
+            <td>—</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+
+        {% if not plan %}
+        <tr class="empty-row">
+            <td colspan="6">
+                План не сформирован. Нажмите «Авторазбивка» или
+                <a href="/duties?duty_date={{ plan_date }}">создайте наряды</a>.
+            </td>
+        </tr>
+        {% endif %}
+
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

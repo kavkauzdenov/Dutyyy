@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Главная — Система нарядов{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:10px; margin-top:10px;">
+    <span class="page-title">Оперативная обстановка / {{ today }}</span>
+</div>
+
+<div class="stat-row">
+    <div class="stat-box">
+        <div class="stat-label">Всего л/с</div>
+        <div class="stat-value">{{ total_staff }}</div>
+    </div>
+    <div class="stat-box {% if available > 0 %}ok{% endif %}">
+        <div class="stat-label">Доступны</div>
+        <div class="stat-value">{{ available }}</div>
+    </div>
+    <div class="stat-box {% if on_duty_today > 0 %}ok{% endif %}">
+        <div class="stat-label">В наряде сегодня</div>
+        <div class="stat-value">{{ on_duty_today }}</div>
+    </div>
+    <div class="stat-box {% if sick > 0 %}warn{% endif %}">
+        <div class="stat-label">Больных</div>
+        <div class="stat-value">{{ sick }}</div>
+    </div>
+    <div class="stat-box {% if on_leave > 0 %}warn{% endif %}">
+        <div class="stat-label">Отсутств.</div>
+        <div class="stat-value">{{ on_leave }}</div>
+    </div>
+    <div class="stat-box {% if shortages|length > 0 %}warn{% endif %}">
+        <div class="stat-label">Недоборы</div>
+        <div class="stat-value">{{ shortages|length }}</div>
+    </div>
+</div>
+
+{% if shortages %}
+<div class="alert alert-danger">
+    <strong>ВНИМАНИЕ — Недоборы личного состава:</strong>
+    {% for s in shortages %}
+        &nbsp;|&nbsp; {{ s.type }} {{ s.start }}–{{ s.end }}: не хватает {{ s.missing }} чел.
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="panels">
+    <div class="panel">
+        <div class="panel-header">Обязательные наряды на {{ today }}</div>
+        <div class="panel-body">
+            {% if mandatory %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Наряд</th>
+                        <th>Время</th>
+                        <th>Состав</th>
+                        <th>Мин.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for d in mandatory %}
+                <tr>
+                    <td class="text-bold">{{ d.type_name }}</td>
+                    <td>{{ d.start_time }}–{{ d.end_time }}</td>
+                    <td>
+                        {% if d.assigned_count >= d.min_staff %}
+                            <span class="badge badge-green">{{ d.assigned_count }}</span>
+                        {% else %}
+                            <span class="badge badge-red">{{ d.assigned_count }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ d.min_staff }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted">Нет обязательных нарядов на сегодня.
+                <a href="/duties?duty_date={{ today }}">Добавить</a></p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">Дополнительные наряды на {{ today }}</div>
+        <div class="panel-body">
+            {% if additional %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Наряд</th>
+                        <th>Время</th>
+                        <th>Состав</th>
+                        <th>Мин.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for d in additional %}
+                <tr>
+                    <td class="text-bold">{{ d.type_name }}</td>
+                    <td>{{ d.start_time }}–{{ d.end_time }}</td>
+                    <td>
+                        {% if d.assigned_count >= d.min_staff %}
+                            <span class="badge badge-green">{{ d.assigned_count }}</span>
+                        {% else %}
+                            <span class="badge badge-yellow">{{ d.assigned_count }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ d.min_staff }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted">Нет дополнительных нарядов.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">Суточный план (краткий)</div>
+        <div class="panel-body">
+            {% if recent_plan %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Сотрудник</th>
+                        <th>Занятость</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in recent_plan %}
+                <tr>
+                    <td>{{ row.rank }} {{ row.name }}</td>
+                    <td>
+                        {% if row.assignment_type == 'duty' %}
+                            <span class="badge badge-blue">Наряд: {{ row.duty_name }}</span>
+                        {% elif row.assignment_type == 'rest' %}
+                            <span class="badge badge-gray">Выходной</span>
+                        {% elif row.assignment_type == 'training' %}
+                            <span class="badge badge-green">Обучение</span>
+                        {% elif row.assignment_type == 'maintenance' %}
+                            <span class="badge badge-orange">Хоз. работы</span>
+                        {% elif row.assignment_type == 'admin' %}
+                            <span class="badge badge-yellow">Адм. задачи</span>
+                        {% else %}
+                            <span class="badge badge-gray">{{ row.assignment_type }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted">
+                План не сформирован.
+                <a href="/daily-plan?plan_date={{ today }}">Сформировать</a>
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div style="margin-top:4px;">
+    <a href="/daily-plan?plan_date={{ today }}" class="btn btn-primary">Суточный план</a>
+    &nbsp;
+    <a href="/duties?duty_date={{ today }}" class="btn btn-secondary">Управление нарядами</a>
+</div>
+
+{% endblock %}

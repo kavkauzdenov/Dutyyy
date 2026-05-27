@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Система нарядов{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+    <span class="sys-title">АС «Наряды» — Планирование служебной занятости</span>
+    <span class="sys-date" id="sys-date"></span>
+</header>
+
+<nav>
+    <a href="/dashboard" class="{% if active_page == 'dashboard' %}active{% endif %}">Главная</a>
+    <a href="/staff"     class="{% if active_page == 'staff'     %}active{% endif %}">Личный состав</a>
+    <a href="/duties"    class="{% if active_page == 'duties'    %}active{% endif %}">Наряды</a>
+    <a href="/daily-plan" class="{% if active_page == 'daily-plan' %}active{% endif %}">Суточный план</a>
+    <a href="/settings"  class="{% if active_page == 'settings'  %}active{% endif %}">Настройки</a>
+</nav>
+
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+
+<script>
+    (function() {
+        var d = new Date();
+        var days = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+        var months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+        var el = document.getElementById('sys-date');
+        if (el) {
+            el.textContent = days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear()
+                + '  |  ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+        }
+    })();
+</script>
+
+</body>
+</html>

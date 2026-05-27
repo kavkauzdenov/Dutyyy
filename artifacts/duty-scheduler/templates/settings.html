@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Настройки — Система нарядов{% endblock %}
+
+{% block content %}
+<div style="margin:10px 0 8px;">
+    <span class="page-title">Настройки системы</span>
+</div>
+
+<div class="panels">
+    <div class="panel" style="max-width:560px;">
+        <div class="panel-header">Нормы нарядов и правила распределения</div>
+        <div class="panel-body">
+            <form method="post" action="/settings/rules">
+                <table style="width:100%;">
+                    <tbody>
+                    <tr>
+                        <td style="padding:5px 8px;width:55%;font-weight:bold;font-size:12px;">Обязательных нарядов в сутки</td>
+                        <td style="padding:5px 8px;">
+                            <input type="number" name="mandatory_per_day" value="{{ rules.mandatory_per_day if rules else 2 }}"
+                                   min="0" style="width:80px;border:1px solid #9099a3;padding:4px 7px;font-size:12px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:5px 8px;font-weight:bold;font-size:12px;">Дополнительных нарядов в сутки</td>
+                        <td style="padding:5px 8px;">
+                            <input type="number" name="additional_per_day" value="{{ rules.additional_per_day if rules else 1 }}"
+                                   min="0" style="width:80px;border:1px solid #9099a3;padding:4px 7px;font-size:12px;">
+                        </td>
+                    </tr>
+                    <tr style="background:#f4f6fb;">
+                        <td style="padding:5px 8px;font-weight:bold;font-size:12px;">Мин. состав обязательного наряда</td>
+                        <td style="padding:5px 8px;">
+                            <input type="number" name="min_staff_mandatory" value="{{ rules.min_staff_mandatory if rules else 2 }}"
+                                   min="1" style="width:80px;border:1px solid #9099a3;padding:4px 7px;font-size:12px;">
+                        </td>
+                    </tr>
+                    <tr style="background:#f4f6fb;">
+                        <td style="padding:5px 8px;font-weight:bold;font-size:12px;">Мин. состав дополнительного наряда</td>
+                        <td style="padding:5px 8px;">
+                            <input type="number" name="min_staff_additional" value="{{ rules.min_staff_additional if rules else 1 }}"
+                                   min="1" style="width:80px;border:1px solid #9099a3;padding:4px 7px;font-size:12px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:5px 8px;font-weight:bold;font-size:12px;">Макс. часов службы в сутки</td>
+                        <td style="padding:5px 8px;">
+                            <input type="number" name="max_hours_per_day" value="{{ rules.max_hours_per_day if rules else 8 }}"
+                                   min="1" max="24" step="0.5" style="width:80px;border:1px solid #9099a3;padding:4px 7px;font-size:12px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:5px 8px;font-weight:bold;font-size:12px;">Мин. отдых между нарядами (часов)</td>
+                        <td style="padding:5px 8px;">
+                            <input type="number" name="min_rest_hours" value="{{ rules.min_rest_hours if rules else 4 }}"
+                                   min="0" max="24" step="0.5" style="width:80px;border:1px solid #9099a3;padding:4px 7px;font-size:12px;">
+                        </td>
+                    </tr>
+                    <tr style="background:#f4f6fb;">
+                        <td style="padding:5px 8px;font-weight:bold;font-size:12px;">Мин. выходных в неделю</td>
+                        <td style="padding:5px 8px;">
+                            <input type="number" name="min_weekly_rest" value="{{ rules.min_weekly_rest if rules else 1 }}"
+                                   min="0" max="7" style="width:80px;border:1px solid #9099a3;padding:4px 7px;font-size:12px;">
+                        </td>
+                    </tr>
+                    <tr style="background:#f4f6fb;">
+                        <td style="padding:5px 8px;font-weight:bold;font-size:12px;">Мин. выходных в месяц (контрактники)</td>
+                        <td style="padding:5px 8px;">
+                            <input type="number" name="min_monthly_rest" value="{{ rules.min_monthly_rest if rules else 6 }}"
+                                   min="0" max="31" style="width:80px;border:1px solid #9099a3;padding:4px 7px;font-size:12px;">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div style="padding:8px 8px 4px;">
+                    <button type="submit" class="btn btn-primary">Сохранить нормы</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">Справочник типов нарядов</div>
+        <div class="panel-body">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Название</th>
+                        <th>Категория</th>
+                        <th>Мин. состав</th>
+                        <th>Описание</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for dt in duty_types %}
+                <tr>
+                    <td class="text-muted">{{ dt.id }}</td>
+                    <td class="text-bold">{{ dt.name }}</td>
+                    <td>
+                        {% if dt.category == 'mandatory' %}
+                            <span class="badge badge-blue">Обязательный</span>
+                        {% else %}
+                            <span class="badge badge-gray">Дополнительный</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ dt.min_staff }}</td>
+                    <td class="text-muted">{{ dt.description or '' }}</td>
+                </tr>
+                {% else %}
+                <tr class="empty-row"><td colspan="5">Нет типов нарядов. Добавьте на странице «Наряды».</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="form-block" style="max-width:600px;">
+    <div class="form-title">Справка по статусам</div>
+    <table>
+        <thead><tr><th>Статус</th><th>Значение</th><th>Участвует в нарядах</th></tr></thead>
+        <tbody>
+        <tr><td><span class="badge badge-green">available</span></td><td>Доступен</td><td>Да</td></tr>
+        <tr><td><span class="badge badge-red">sick</span></td><td>Болен</td><td>Нет</td></tr>
+        <tr><td><span class="badge badge-yellow">vacation</span></td><td>Отпуск</td><td>Нет</td></tr>
+        <tr><td><span class="badge badge-orange">business_trip</span></td><td>Командировка</td><td>Нет</td></tr>
+        <tr><td><span class="badge badge-gray">rest</span></td><td>Выходной / отдых</td><td>Нет</td></tr>
+        <tr><td><span class="badge badge-yellow">restricted</span></td><td>Ограничен (один тип наряда)</td><td>Да (ограниченно)</td></tr>
+        <tr><td><span class="badge badge-gray">exempt</span></td><td>Освобождён</td><td>Нет</td></tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

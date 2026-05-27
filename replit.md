@@ -1,36 +1,49 @@
-# [Project name]
+# АС «Наряды» — Система планирования и распределения нарядов
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Автоматизированная система управления служебными нарядами для закрытой локальной сети (intranet).
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `cd artifacts/duty-scheduler && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload` — запуск приложения
+- Workflow: **Система нарядов** (порт 8000)
+- База данных: `artifacts/duty-scheduler/duty_scheduler.db` (SQLite, создаётся при первом запуске)
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Python 3.11
+- FastAPI 0.111
+- Jinja2 (серверный рендеринг, без React)
+- SQLite (файловая БД)
+- HTML + CSS (государственный минималистичный стиль)
+- Vanilla JavaScript (минимально)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/duty-scheduler/app/main.py` — точка входа FastAPI, маршрут `/dashboard`
+- `artifacts/duty-scheduler/app/routers/` — роутеры: staff, duties, schedule, settings
+- `artifacts/duty-scheduler/app/scheduler/engine.py` — движок авторазбивки нарядов
+- `artifacts/duty-scheduler/app/database.py` — инициализация БД, схема таблиц
+- `artifacts/duty-scheduler/templates/` — Jinja2 шаблоны (base, dashboard, staff, duties, daily_plan, settings)
+- `artifacts/duty-scheduler/static/style.css` — стили (гос-стиль, без анимаций)
+
+## Pages
+
+| Страница | URL | Назначение |
+|---|---|---|
+| Dashboard | `/dashboard` | Оперативная обстановка, статистика, недоборы |
+| Личный состав | `/staff` | Список л/с, статусы, нагрузка |
+| Наряды | `/duties` | Управление нарядами, типы нарядов, ручное назначение |
+| Суточный план | `/daily-plan` | Полная картина: кто в наряде / обучении / отдыхе |
+| Настройки | `/settings` | Нормы нарядов, правила распределения |
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
-
-## Product
-
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Служебные сутки 20:00–20:00, поддержка пересечения полуночи
+- Лимит 8 ч/сут на сотрудника, минимум 4 ч отдыха между нарядами
+- Статусы: available / sick / vacation / business_trip / rest / restricted / exempt
+- Типы л/с: contract / conscript / exempt
+- Автораспределение: обязательные наряды первыми, равномерная нагрузка (total_duty_hours ASC), свободные → activity/rest
+- Выходные: ≥1/нед, ≥6/мес (кроме срочников)
 
 ## User preferences
 
@@ -38,8 +51,6 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Python-пакеты установлены через uv в `.pythonlibs/`
+- После изменений в `app/` uvicorn перезагружается автоматически (`--reload`)
+- `sqlite3.Row` используется для доступа к полям по имени

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Личный состав — Система нарядов{% endblock %}
+
+{% block content %}
+<div style="margin: 10px 0;">
+    <span class="page-title">Личный состав</span>
+</div>
+
+<div class="form-block">
+    <div class="form-title">Добавить сотрудника</div>
+    <form method="post" action="/staff">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Фамилия И.О.</label>
+                <input type="text" name="name" required placeholder="Иванов И.И.">
+            </div>
+            <div class="form-group">
+                <label>Звание / должность</label>
+                <input type="text" name="rank" placeholder="Рядовой">
+            </div>
+            <div class="form-group">
+                <label>Тип</label>
+                <select name="staff_type">
+                    <option value="contract">Контрактник</option>
+                    <option value="conscript">Срочник</option>
+                    <option value="exempt">Освобождён</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Статус</label>
+                <select name="status">
+                    <option value="available">Доступен</option>
+                    <option value="sick">Болен</option>
+                    <option value="vacation">Отпуск</option>
+                    <option value="business_trip">Командировка</option>
+                    <option value="rest">Отдых</option>
+                    <option value="restricted">Ограничен</option>
+                    <option value="exempt">Освобождён</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Тип наряда (для ограничен.)</label>
+                <input type="text" name="restriction_type" placeholder="Название наряда">
+            </div>
+            <div class="form-group" style="justify-content:flex-end;">
+                <button type="submit" class="btn btn-primary">Добавить</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="tbl-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Звание</th>
+                <th>Фамилия И.О.</th>
+                <th>Тип</th>
+                <th>Статус</th>
+                <th>Ограничение</th>
+                <th>Часов службы</th>
+                <th>Нарядов</th>
+                <th>Изменить статус</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for s in staff %}
+        <tr>
+            <td class="text-muted">{{ s.id }}</td>
+            <td>{{ s.rank }}</td>
+            <td class="text-bold">{{ s.name }}</td>
+            <td>
+                {% if s.staff_type == 'contract' %}
+                    <span class="badge badge-blue">Контракт</span>
+                {% elif s.staff_type == 'conscript' %}
+                    <span class="badge badge-gray">Срочник</span>
+                {% else %}
+                    <span class="badge badge-yellow">Освобождён</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if s.status == 'available' %}
+                    <span class="badge badge-green">Доступен</span>
+                {% elif s.status == 'sick' %}
+                    <span class="badge badge-red">Болен</span>
+                {% elif s.status == 'vacation' %}
+                    <span class="badge badge-yellow">Отпуск</span>
+                {% elif s.status == 'business_trip' %}
+                    <span class="badge badge-orange">Командировка</span>
+                {% elif s.status == 'rest' %}
+                    <span class="badge badge-gray">Отдых</span>
+                {% elif s.status == 'restricted' %}
+                    <span class="badge badge-yellow">Ограничен</span>
+                {% else %}
+                    <span class="badge badge-gray">{{ s.status }}</span>
+                {% endif %}
+            </td>
+            <td>{{ s.restriction_type or '—' }}</td>
+            <td>{{ "%.1f"|format(s.total_duty_hours) }}</td>
+            <td>{{ s.total_assignments }}</td>
+            <td>
+                <form method="post" action="/staff/{{ s.id }}/status" style="display:flex;gap:4px;flex-wrap:wrap;">
+                    <select name="status" style="font-size:11px;padding:3px 5px;border:1px solid #9099a3;">
+                        <option value="available"      {% if s.status == 'available'      %}selected{% endif %}>Доступен</option>
+                        <option value="sick"           {% if s.status == 'sick'           %}selected{% endif %}>Болен</option>
+                        <option value="vacation"       {% if s.status == 'vacation'       %}selected{% endif %}>Отпуск</option>
+                        <option value="business_trip"  {% if s.status == 'business_trip'  %}selected{% endif %}>Командировка</option>
+                        <option value="rest"           {% if s.status == 'rest'           %}selected{% endif %}>Отдых</option>
+                        <option value="restricted"     {% if s.status == 'restricted'     %}selected{% endif %}>Ограничен</option>
+                        <option value="exempt"         {% if s.status == 'exempt'         %}selected{% endif %}>Освобождён</option>
+                    </select>
+                    <input type="text" name="restriction_type" value="{{ s.restriction_type or '' }}"
+                           placeholder="тип (ограничен.)" style="width:120px;font-size:11px;padding:3px 5px;border:1px solid #9099a3;">
+                    <button type="submit" class="btn btn-secondary" style="padding:3px 10px;font-size:11px;">Сохранить</button>
+                </form>
+            </td>
+            <td>
+                <form method="post" action="/staff/{{ s.id }}/delete"
+                      onsubmit="return confirm('Удалить {{ s.name }}?')">
+                    <button type="submit" class="btn btn-danger" style="padding:3px 10px;font-size:11px;">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr class="empty-row"><td colspan="10">Нет сотрудников. Добавьте выше.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
