@@ -26,6 +26,11 @@ def on_startup():
     init_db()
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.get("/")
 def root():
     return RedirectResponse(url="/dashboard")
@@ -105,3 +110,4 @@ def dashboard(request: Request):
         "recent_plan": recent_plan,
         "active_page": "dashboard"
     })
+

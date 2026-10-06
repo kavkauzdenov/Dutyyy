@@ -44,6 +44,10 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
-# Replit
+# local caches and test data
 .cache/
 .local/
+*.db
+*.db-shm
+*.db-wal
+

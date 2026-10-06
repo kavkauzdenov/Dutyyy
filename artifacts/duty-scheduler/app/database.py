@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "duty_scheduler.db")
+DB_PATH = os.environ.get("DATABASE_PATH", "/tmp/dutyyy-demo.db")
 
 
 def get_db():
@@ -108,3 +108,4 @@ def init_db():
 
     conn.commit()
     conn.close()
+
